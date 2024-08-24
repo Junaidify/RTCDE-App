@@ -64,10 +64,10 @@ This Task Management API was built using Node.js, Express, and MongoDB. It inclu
   * Request Example
   ``` 
  {
-  "title": "New Task",
- "assignee": "John Doe",
-  "status": "pending",
-  "priority": "high"
+    "title": "New Task",
+    "assignee": "John Doe",
+    "status": "pending",
+    "priority": "high"
 }
   ```
 
@@ -78,10 +78,10 @@ This Task Management API was built using Node.js, Express, and MongoDB. It inclu
   * Request Example
   ``` 
  {
-  "title": "New Task",
- "assignee": "Jane Smith",
-  "status": "pending",
-  "priority": "high"
+    "title": "New Task",
+    "assignee": "Jane Smith",
+    "status": "pending",
+    "priority": "high"
 }
   ```
 
@@ -93,10 +93,9 @@ This Task Management API was built using Node.js, Express, and MongoDB. It inclu
 
 ## Installation
  #### 1. Clone the repository:
-       ```
-       git clone git clone https://github.com/Rickykumar010/eduLabs.git
-
-       ```
+   ```
+    git clone https://github.com/Junaidify/Task-Management-Api.git
+   ```
 
  #### 2. Run the Server
   * npm start
