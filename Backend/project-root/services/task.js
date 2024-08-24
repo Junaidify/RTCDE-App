@@ -7,15 +7,15 @@ router.use(express.json());
 router.post("/dashboard", async (req, res) => {
   const newTask = req.body;
 
+  console.log(newTask);
   if (
-    !newTask.name ||
+    !newTask.title ||
     !newTask.priority ||
-    !newTask.status ||
+    newTask.status.length === 0 ||
     !newTask.assignee
   ) {
     return res.status(400).send({ data: "All fields are required" });
   }
-  console.log(newTask);
 
   try {
     await Task.create(newTask);
@@ -86,10 +86,10 @@ router.get("/dashboard/:id", async (req, res) => {
 });
 
 router.get("/dashboard", async (req, res) => {
-  const { priority, status, assignee, name } = req.query;
+  const { priority, status, assignee, title } = req.query;
   try {
     const filter = {};
-    if (name) filter.name = name;
+    if (title) filter.title = title;
     if (assignee) filter.assignee = assignee;
     if (priority) filter.priority = priority;
     if (status) filter.status = status;

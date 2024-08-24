@@ -3,11 +3,11 @@ const mongoose = require("../modules/connect");
 const Priority = Object.freeze({
   HIGH: "HIGH",
   MEDIUM: "MEDIUM",
-  LOW: "LOW"
+  LOW: "LOW",
 });
 
 const taskSchema = new mongoose.Schema({
-  name: {
+  title: {
     type: String,
   },
   priority: {
