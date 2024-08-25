@@ -106,30 +106,27 @@ router.get(
   }
 );
 
-router.get(
-  "/tasks",
-  async (req, res) => {
-    const { priority, status, assignee, title } = req.query;
-    const filter = {};
-    if (title) filter.title = title;
-    if (assignee) filter.assignee = assignee;
-    if (priority) filter.priority = priority;
-    if (status) filter.status = status;
+router.get("/tasks", async (req, res) => {
+  const { priority, status, assignee, title } = req.query;
+  const filter = {};
+  if (title) filter.title = title;
+  if (assignee) filter.assignee = assignee;
+  if (priority) filter.priority = priority;
+  if (status) filter.status = status;
 
-    try {
-      const tasks = await Task.find(filter);
+  try {
+    const tasks = await Task.find(filter);
 
-      if (tasks.length === 0) {
-        return res.status(404).json({ message: "No tasks found" });
-      }
-
-      res.status(200).json(tasks);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (tasks.length === 0) {
+      return res.status(404).json({ message: "No tasks found" });
     }
+
+    res.status(200).json(tasks);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
-);
+});
 
 router.get("/admin", authorizeToken, authorizeRole(["admin"]), (req, res) => {
   res.status(200).json({ message: "Welcome, Admin" });
