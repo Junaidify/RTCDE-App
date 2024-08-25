@@ -9,23 +9,29 @@ router.use(express.urlencoded({ extended: true }));
 router.post("/register", async (req, res) => {
   const { username, password, name, email, role } = req.body;
 
-  if ((!username || !password || !name || !email, !role)) {
-    return res.status(400).send({ data: "All fields are required" });
+  if (!username || !password || !name || !email || !role) {
+    return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
-    const newUser = await Auth.findOne({ email: email });
-    console.log(newUser);
-    if (newUser) {
-      return res.status(400).send({ data: "Your account is already exist" });
+    const existingUser = await Auth.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: "Account already exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(password, salt);
-    await Auth.create({ username, password: hashPassword, name, email, role });
-    res.send({ data: "User created successfully" });
+    const hashedPassword = await bcrypt.hash(password, salt);
+    await Auth.create({
+      username,
+      password: hashedPassword,
+      name,
+      email,
+      role,
+    });
+    res.status(201).json({ message: "User created successfully" });
   } catch (err) {
-    return res.status(500).send({ err: "Data is not stored" });
+    console.error(err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -33,33 +39,34 @@ router.post("/login", async (req, res) => {
   const { username, password, role } = req.body;
 
   if (!username || !password) {
-    return res.status(400).send({ data: "All fields are required" });
+    return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
     const user = await Auth.findOne({ username, role });
     if (!user) {
-      return res.status(400).send({ data: "Invalid credentials" });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const isMatch = bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(200).send({ data: "Invalid credientals" });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
 
-    res.status(200).send({ data: "Login successful" });
+    res.status(200).json({ message: "Login successful" });
   } catch (err) {
-    console.log(err);
-    res.status(500).send({ err: "Data is not fetched" });
-    return;
+    console.error(err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 router.get("/register", async (req, res) => {
   try {
     const users = await Auth.find({});
-    res.status(200).send({ data: users });
+    res.status(200).json({ data: users });
   } catch (err) {
-    console.log(err);
-    res.status(500).send({ err: "Data is not fetched" });
+    console.error(err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

@@ -1,23 +1,23 @@
 const jwt = require("jsonwebtoken");
 
 const authorizeToken = (req, res, next) => {
-  const token = req.header("Authorization").split(" ")[1];
+  const token = req.headers.authorizeToken?.split(" ")[1];
 
-  if (!token) return res.status(401).send({ data: "Access Denied" });
+  if (!token) return res.status(401).send({ message: "Access Denied" });
 
   try {
     const verified = jwt.verify(token, process.env.SECRET_KEY);
     req.user = verified;
     next();
   } catch (err) {
-    return res.status(500).send({ data: "Invalid token" });
+    return res.status(500).send({ message: "Not found, Please login first" });
   }
 };
 
-const authorizeRole = (role) => {
+const authorizeRole = (roles) => {
   return (req, res, next) => {
-    if (req.user.role !== role) {
-      return res.status(403).send({ data: "Access Denied" });
+    if (roles.includes(req.user.role)) {
+      return res.status(403).send({ message: "Access Denied" });
     }
     next();
   };

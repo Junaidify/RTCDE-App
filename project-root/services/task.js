@@ -8,26 +8,25 @@ router.use(express.json());
 router.post(
   "/tasks",
   authorizeToken,
-  authorizeRole("admin"),
+  authorizeRole(["admin"]),
   async (req, res) => {
     const newTask = req.body;
 
-    console.log(newTask);
     if (
       !newTask.title ||
       !newTask.priority ||
-      newTask.status.length === 0 ||
+      !newTask.status ||
       !newTask.assignee
     ) {
-      return res.status(400).send({ data: "All fields are required" });
+      return res.status(400).json({ error: "All fields are required" });
     }
 
     try {
       await Task.create(newTask);
-      res.status(201).send({ data: "Task is created" });
+      res.status(201).json({ message: "Task created successfully" });
     } catch (err) {
-      console.log(err);
-      return res.status(400).json({ data: "Something went wrong with task" });
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 );
@@ -35,32 +34,30 @@ router.post(
 router.patch(
   "/tasks/:id",
   authorizeToken,
-  authorizeRole("admin"),
+  authorizeRole(["admin"]),
   async (req, res) => {
-    const updatedUserId = req.params.id;
-    const updatedUser = req.body;
+    const updatedTaskId = req.params.id;
+    const updatedTask = req.body;
 
-    if (!updatedUser || Object.keys(updatedUser).length === 0) {
-      return res.status(204).send({ data: "No fields are provided" });
+    if (!updatedTask || Object.keys(updatedTask).length === 0) {
+      return res.status(400).json({ error: "No fields provided for update" });
     }
 
     try {
-      const userExist = await Task.findByIdAndUpdate(
-        updatedUserId,
-        { $set: updatedUser },
+      const task = await Task.findByIdAndUpdate(
+        updatedTaskId,
+        { $set: updatedTask },
         { new: true, runValidators: true }
       );
 
-      if (!userExist) {
-        return res.status(204).send({ data: "No user found" });
+      if (!task) {
+        return res.status(404).json({ error: "Task not found" });
       }
 
-      await userExist.save();
-      res.status(200).send({ data: "Updated Successfully" });
+      res.status(200).json({ message: "Task updated successfully", task });
     } catch (err) {
-      return res
-        .status(400)
-        .send({ data: "Something went wrong in user update field" });
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 );
@@ -68,20 +65,21 @@ router.patch(
 router.delete(
   "/tasks/:id",
   authorizeToken,
-  authorizeRole("admin"),
+  authorizeRole(["admin"]),
   async (req, res) => {
-    const deleteUser = req.params.id;
-
-    if (!deleteUser)
-      return res.status(404).send({ data: "Provide user credientals" });
+    const taskId = req.params.id;
 
     try {
-      await Task.findByIdAndDelete(deleteUser);
-      res.status(200).send({ data: "user is deleted" });
+      const task = await Task.findByIdAndDelete(taskId);
+
+      if (!task) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      res.status(200).json({ message: "Task deleted successfully" });
     } catch (err) {
-      return res
-        .status(500)
-        .send({ data: `something went wrong during deletion ${err}` });
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 );
@@ -89,42 +87,52 @@ router.delete(
 router.get(
   "/tasks/:id",
   authorizeToken,
-  authorizeRole("admin"),
+  authorizeRole(["admin"]),
   async (req, res) => {
-    const specificUser = req.params.id;
-
-    if (!specificUser) {
-      return res.status(400).send({ data: "Provide Correct Id" });
-    }
+    const taskId = req.params.id;
 
     try {
-      const user = await Task.findById(specificUser);
-      res.status(200).send(user);
+      const task = await Task.findById(taskId);
+
+      if (!task) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      res.status(200).json(task);
     } catch (err) {
-      return res.status(400).send({ data: "User doesn't exist" });
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 );
 
 router.get(
   "/tasks",
-  authorizeToken,
-  authorizeRole("admin"),
   async (req, res) => {
     const { priority, status, assignee, title } = req.query;
-    try {
-      const filter = {};
-      if (title) filter.title = title;
-      if (assignee) filter.assignee = assignee;
-      if (priority) filter.priority = priority;
-      if (status) filter.status = status;
+    const filter = {};
+    if (title) filter.title = title;
+    if (assignee) filter.assignee = assignee;
+    if (priority) filter.priority = priority;
+    if (status) filter.status = status;
 
-      users = await Task.find(filter);
-      res.status(200).send(users);
+    try {
+      const tasks = await Task.find(filter);
+
+      if (tasks.length === 0) {
+        return res.status(404).json({ message: "No tasks found" });
+      }
+
+      res.status(200).json(tasks);
     } catch (err) {
-      return res.status(404).send({ data: "User doesn't exist" });
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 );
+
+router.get("/admin", authorizeToken, authorizeRole(["admin"]), (req, res) => {
+  res.status(200).json({ message: "Welcome, Admin" });
+});
 
 module.exports = router;
